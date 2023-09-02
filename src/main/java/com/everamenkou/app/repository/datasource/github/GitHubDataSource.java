@@ -5,6 +5,7 @@ import com.everamenkou.app.repository.datasource.Repository;
 import com.everamenkou.app.repository.datasource.RepositoryDataSource;
 import com.everamenkou.app.repository.datasource.github.dto.GitHubBranchResponse;
 import com.everamenkou.app.repository.datasource.github.dto.GitHubRepositoryResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -19,12 +20,17 @@ public class GitHubDataSource implements RepositoryDataSource {
     private final String REPOS_URL = "https://api.github.com/users/%s/repos";
     private final String BRANCH_URL = "https://api.github.com/repos/%s/%s/branches";
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
+
+    @Autowired
+    public GitHubDataSource(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
 
     @Override
     public List<Repository> findPublicRepositories(String username) {
-        ResponseEntity<GitHubRepositoryResponse[]> forEntity = restTemplate.getForEntity(getRepositoryUrl(username), GitHubRepositoryResponse[].class);
-        List<GitHubRepositoryResponse> repositoryBody = Arrays.asList(Objects.requireNonNull(forEntity.getBody()));
+        ResponseEntity<GitHubRepositoryResponse[]> response = restTemplate.getForEntity(getRepositoryUrl(username), GitHubRepositoryResponse[].class);
+        List<GitHubRepositoryResponse> repositoryBody = Arrays.asList(Objects.requireNonNull(response.getBody()));
 
         repositoryBody = repositoryBody.stream()
                 .filter(repositoryResponse -> !repositoryResponse.fork())
